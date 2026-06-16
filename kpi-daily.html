@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPI รายวัน — ทีม Marketing</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f4ff;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    /* ---- Header ---- */
+    .page-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .page-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #3b3b98;
+    }
+    .page-header p { color: #666; margin-top: 6px; font-size: 0.95rem; }
+
+    /* ---- Card ---- */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 640px;
+      margin: 0 auto 32px;
+      box-shadow: 0 4px 24px rgba(59,59,152,0.08);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #3b3b98;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---- Form ---- */
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    label span.required { color: #e04a4a; margin-left: 2px; }
+
+    input[type="text"],
+    input[type="url"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #dde1f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #1a1a2e;
+      background: #fafbff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #5c6bc0;
+      box-shadow: 0 0 0 3px rgba(92,107,192,0.12);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    select { cursor: pointer; }
+
+    #other-wrap { margin-top: 8px; display: none; }
+
+    /* ---- Date badge ---- */
+    .date-badge {
+      display: inline-block;
+      background: #eef0ff;
+      color: #3b3b98;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .date-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .date-row .date-badge { margin-bottom: 0; }
+
+    /* ---- Submit ---- */
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #5c6bc0, #3b3b98);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* ---- Toast ---- */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2e7d32;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      transition: transform 0.35s ease, opacity 0.35s ease;
+      opacity: 0;
+      z-index: 999;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ---- History ---- */
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 640px;
+      margin: 0 auto 12px;
+    }
+    .history-header h2 { font-size: 1rem; font-weight: 600; color: #3b3b98; }
+    .btn-export {
+      background: none;
+      border: 1.5px solid #5c6bc0;
+      color: #5c6bc0;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-export:hover { background: #5c6bc0; color: #fff; }
+
+    #entries-list { max-width: 640px; margin: 0 auto; }
+
+    .entry-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 12px rgba(59,59,152,0.06);
+      border-left: 4px solid #5c6bc0;
+      position: relative;
+    }
+    .entry-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .entry-name { font-weight: 700; font-size: 1rem; color: #1a1a2e; }
+    .entry-role {
+      background: #eef0ff;
+      color: #3b3b98;
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .entry-date { color: #999; font-size: 0.8rem; margin-left: auto; }
+
+    .entry-body label {
+      font-size: 0.78rem;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+    .entry-body p { font-size: 0.9rem; color: #333; margin-bottom: 10px; line-height: 1.5; }
+    .entry-body a { color: #5c6bc0; word-break: break-all; font-size: 0.88rem; }
+
+    .btn-delete {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .btn-delete:hover { color: #e04a4a; }
+
+    .empty-state {
+      text-align: center;
+      color: #aaa;
+      padding: 32px;
+      font-size: 0.95rem;
+    }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      max-width: 640px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .filter-bar input {
+      flex: 1;
+      padding: 8px 14px;
+      border: 1.5px solid #dde1f0;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      outline: none;
+      background: #fff;
+    }
+    .filter-bar input:focus { border-color: #5c6bc0; }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>📊 KPI รายวัน</h1>
+  <p>ทีม Marketing — กรอกสรุปงานประจำวัน</p>
+</div>
+
+<!-- FORM -->
+<div class="card">
+  <h2>📝 กรอกข้อมูลวันนี้</h2>
+  <div class="date-row">
+    <div class="date-badge" id="today-label"></div>
+    <div class="date-badge" id="time-label">🕐 00:00:00</div>
+  </div>
+
+  <form id="kpi-form">
+    <div class="form-group">
+      <label>ชื่อ <span class="required">*</span></label>
+      <input type="text" id="f-name" placeholder="กรอกชื่อ-นามสกุล" required />
+    </div>
+
+    <div class="form-group">
+      <label>ตำแหน่ง <span class="required">*</span></label>
+      <select id="f-role" required>
+        <option value="">— เลือกตำแหน่ง —</option>
+        <option>Marketing</option>
+        <option>Graphic</option>
+        <option>Editing</option>
+        <option>Creative</option>
+      </select>
+      </div>
+
+    <div class="form-group">
+      <label>สรุปงานวันนี้ <span class="required">*</span></label>
+      <textarea id="f-summary" placeholder="อธิบายสิ่งที่ทำในวันนี้..." required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>ลิ้งงาน</label>
+      <input type="url" id="f-link" placeholder="https://..." />
+    </div>
+
+    <div class="form-group">
+      <label>ข้อเสนอแนะ</label>
+      <textarea id="f-feedback" placeholder="มีอะไรที่อยากแนะนำ หรือปัญหาที่เจอ..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">✅ ส่ง KPI วันนี้</button>
+  </form>
+</div>
+
+<!-- HISTORY -->
+<div class="history-header">
+  <h2>📋 ประวัติการกรอก</h2>
+  <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+</div>
+
+<div class="filter-bar">
+  <input type="text" id="filter-input" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..." oninput="renderEntries()" />
+</div>
+
+<div id="entries-list"></div>
+
+<div id="toast">✅ บันทึก KPI สำเร็จแล้ว!</div>
+
+<script>
+  const STORAGE_KEY = 'mkt_kpi_entries';
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyhyW9e_jI9mVS8bO1jHbgKqY4bXDDjs86mRR8WcV5CozlYKmtv6p4VYF3lXcDodIrI0w/exec';
+
+  /* ---- Date & live clock ---- */
+  const isoDate = () => new Date().toISOString();
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('today-label').textContent =
+      now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('time-label').textContent =
+      '🕐 ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ---- Load / Save ---- */
+  function loadEntries() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveEntries(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  /* ---- Submit ---- */
+  document.getElementById('kpi-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const role = document.getElementById('f-role').value;
+
+    const entry = {
+      id: Date.now(),
+      timestamp: isoDate(),
+      name: document.getElementById('f-name').value.trim(),
+      role,
+      summary: document.getElementById('f-summary').value.trim(),
+      link: document.getElementById('f-link').value.trim(),
+      feedback: document.getElementById('f-feedback').value.trim(),
+    };
+
+    const entries = loadEntries();
+    entries.unshift(entry);
+    saveEntries(entries);
+
+    this.reset();
+    document.getElementById('f-role').value = '';
+
+    // ส่งข้อมูลไป Google Sheets
+    fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    }).catch(err => console.error('Sheet error:', err));
+
+    showToast();
+    renderEntries();
+  });
+
+  /* ---- Toast ---- */
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  /* ---- Render ---- */
+  function renderEntries() {
+    const q = (document.getElementById('filter-input').value || '').toLowerCase();
+    const entries = loadEntries().filter(e =>
+      !q || e.name.toLowerCase().includes(q) || e.role.toLowerCase().includes(q)
+    );
+
+    const list = document.getElementById('entries-list');
+
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">ยังไม่มีการกรอกข้อมูล</div>';
+      return;
+    }
+
+    list.innerHTML = entries.map(e => {
+      const dt = new Date(e.timestamp);
+      const dateLabel = dt.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+      const timeLabel = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="entry-card" id="entry-${e.id}">
+          <button class="btn-delete" title="ลบ" onclick="deleteEntry(${e.id})">✕</button>
+          <div class="entry-meta">
+            <span class="entry-name">${esc(e.name)}</span>
+            <span class="entry-role">${esc(e.role)}</span>
+            <span class="entry-date">${dateLabel} ${timeLabel}</span>
+          </div>
+          <div class="entry-body">
+            <label>สรุปงานวันนี้</label>
+            <p>${esc(e.summary).replace(/\n/g, '<br>')}</p>
+            ${e.link ? `<label>ลิ้งงาน</label><p><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.link)}</a></p>` : ''}
+            ${e.feedback ? `<label>ข้อเสนอแนะ</label><p>${esc(e.feedback).replace(/\n/g, '<br>')}</p>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function deleteEntry(id) {
+    if (!confirm('ลบรายการนี้?')) return;
+    saveEntries(loadEntries().filter(e => e.id !== id));
+    renderEntries();
+  }
+
+  /* ---- Export CSV ---- */
+  function exportCSV() {
+    const entries = loadEntries();
+    if (!entries.length) { alert('ยังไม่มีข้อมูล'); return; }
+    const header = ['วันที่', 'เวลา', 'ชื่อ', 'ตำแหน่ง', 'สรุปงานวันนี้', 'ลิ้งงาน', 'ข้อเสนอแนะ'];
+    const rows = entries.map(e => {
+      const dt = new Date(e.timestamp);
+      const date = dt.toLocaleDateString('th-TH');
+      const time = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      return [date, time, e.name, e.role, e.summary, e.link, e.feedback].map(v => `"${String(v).replace(/"/g, '""')}"`);
+    });
+    const csv = '﻿' + [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `kpi_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  renderEntries();
+</script>
+</body>
+</html>
